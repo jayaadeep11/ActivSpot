@@ -190,6 +190,10 @@ PanelWindow {
         running: !islandWindow.volDragging
     }
 
+    // Visual edge shift caused by elastic stretch (origin at 8%/92% of collapsedW)
+    readonly property real volRightExtra: volStretch > 0 ? islandShape.collapsedW * 0.92 * volStretch * 0.26 : 0
+    readonly property real volLeftExtra:  volStretch < 0 ? islandShape.collapsedW * 0.92 * (-volStretch) * 0.26 : 0
+
     // Clock / Weather
     property string timeStr:     ""
     property string timeStrSec:  ""
@@ -562,7 +566,9 @@ PanelWindow {
         if (!should && cavaProc.running) cavaProc.running = false;
     }
     onIsMediaActiveChanged: {
-        if (!isMediaActive) {
+        if (isMediaActive) {
+            if (currentPage === "clock") currentPage = "music";
+        } else {
             if (expanded && !notifActive) expanded = false;
             if (currentPage === "music") currentPage = "clock";
             if (cavaProc.running) cavaProc.running = false;
@@ -570,11 +576,11 @@ PanelWindow {
     }
     onIsRecordingChanged: {
         if (isRecording) {
-            recordingSeconds     = 0;
-            isRecordingPaused    = false;
-            currentPage          = "recording";
+            recordingSeconds  = 0;
+            isRecordingPaused = false;
+            // Low priority: don't hijack currentPage — bubble on right shows state
         } else {
-            isRecordingPaused    = false;
+            isRecordingPaused = false;
             if (currentPage === "recording") currentPage = "clock";
             if (!expanded) recordingDotOpacity = 1.0;
         }
@@ -601,7 +607,9 @@ PanelWindow {
         id: maskBounds
         x: Math.floor((Screen.width - islandShape.width) / 2) - s(14)
         y: s(8)
-        width:  islandShape.width + s(28) + (islandWindow.notifBadgeVisible ? s(60) : 0)
+        width:  islandShape.width + s(28)
+                + (recBubble.shouldShow ? recBubble.width + s(8) : 0)
+                + (islandWindow.notifBadgeVisible ? s(60) : 0)
         height: Math.max(islandShape.height, s(48)) + s(8)
     }
     Region { id: maskedRegion; item: maskBounds }
@@ -1078,6 +1086,8 @@ PanelWindow {
 
         property int sz: s(36)
         x: Math.floor(Screen.width / 2) + islandShape.collapsedW / 2 + s(12)
+           + (recBubble.shouldShow ? recBubble.width + s(8) : 0)
+           + islandWindow.volRightExtra
         y: s(8) + (islandShape.collapsedH - sz) / 2
         width: sz; height: sz
 
@@ -1138,7 +1148,7 @@ PanelWindow {
         // Pill width = row content + padding
         width: vpnBadgeRow.implicitWidth + s(28)
 
-        x: Math.floor(Screen.width / 2) - islandShape.collapsedW / 2 - width - s(12)
+        x: Math.floor(Screen.width / 2) - islandShape.collapsedW / 2 - width - s(12) - islandWindow.volLeftExtra
         y: s(8) + (islandShape.collapsedH - badgeH) / 2
 
         opacity: islandWindow.vpnBadgeVisible && !islandWindow.expanded ? 1.0 : 0.0
@@ -1205,7 +1215,7 @@ PanelWindow {
             && islandWindow.currentPage !== "discord"
             && !islandWindow.expanded
 
-        x: Math.floor(Screen.width / 2) - islandShape.collapsedW / 2 - width - s(10)
+        x: Math.floor(Screen.width / 2) - islandShape.collapsedW / 2 - width - s(10) - islandWindow.volLeftExtra
         y: s(8) + (islandShape.collapsedH - bubbleH) / 2
 
         opacity: shouldShow ? 1.0 : 0.0
@@ -1253,6 +1263,91 @@ PanelWindow {
             anchors.fill: parent
             onClicked: {
                 islandWindow.currentPage = "discord"
+                islandWindow.expanded    = true
+            }
+        }
+    }
+
+    // =========================================================
+    // RECORDING BUBBLE
+    // Appears to the RIGHT when recording while another page is active.
+    // Low priority — never steals focus from current page.
+    // =========================================================
+    Item {
+        id: recBubble
+        z: 10
+
+        property int bubbleH: s(36)
+        height: bubbleH
+        width:  recBubbleRow.implicitWidth + s(24)
+
+        property bool shouldShow: islandWindow.isRecording
+            && islandWindow.currentPage !== "recording"
+            && !islandWindow.expanded
+
+        x: Math.floor(Screen.width / 2) + islandShape.collapsedW / 2 + s(12) + islandWindow.volRightExtra
+        y: s(8) + (islandShape.collapsedH - bubbleH) / 2
+
+        opacity: shouldShow ? 1.0 : 0.0
+        visible: opacity > 0.001
+        scale:   shouldShow ? 1.0 : 0.5
+        transformOrigin: Item.Left
+
+        Behavior on opacity { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
+        Behavior on scale   { NumberAnimation { duration: 420; easing.type: Easing.OutBack  } }
+
+        Rectangle {
+            anchors.fill: parent; radius: parent.height / 2
+            color: Qt.rgba(islandWindow.base.r, islandWindow.base.g, islandWindow.base.b, 0.94)
+            border.width: 1.5
+            border.color: Qt.rgba(islandWindow.red.r, islandWindow.red.g, islandWindow.red.b,
+                                  islandWindow.recordingDotOpacity * 0.85)
+            Behavior on border.color { ColorAnimation { duration: 80 } }
+        }
+
+        Row {
+            id: recBubbleRow
+            anchors.centerIn: parent
+            spacing: s(6)
+
+            // Pulsing dot
+            Rectangle {
+                width: s(10); height: s(10); radius: s(5)
+                color: islandWindow.red
+                opacity: islandWindow.isRecordingPaused ? 0.38 : islandWindow.recordingDotOpacity
+                Behavior on opacity { NumberAnimation { duration: 80 } }
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                text: islandWindow.isRecordingPaused ? "PAUSED" : "REC"
+                font.family: "JetBrains Mono"
+                font.pixelSize: recBubble.bubbleH * 0.34
+                font.weight: Font.Black
+                font.letterSpacing: s(1.5)
+                color: islandWindow.isRecordingPaused ? islandWindow.subtext0 : islandWindow.red
+                anchors.verticalCenter: parent.verticalCenter
+                Behavior on color { ColorAnimation { duration: 200 } }
+            }
+
+            Text {
+                text: {
+                    let t = islandWindow.recordingSeconds
+                    let m = Math.floor(t / 60), s2 = t % 60
+                    return (m < 10 ? "0"+m : m) + ":" + (s2 < 10 ? "0"+s2 : s2)
+                }
+                font.family: "JetBrains Mono"
+                font.pixelSize: recBubble.bubbleH * 0.32
+                font.weight: Font.Bold
+                color: islandWindow.subtext0
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                islandWindow.currentPage = "recording"
                 islandWindow.expanded    = true
             }
         }
