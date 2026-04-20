@@ -108,7 +108,7 @@ PanelWindow {
 
     Process {
         id: appsProc
-        command: ["bash", "/home/dxvmxn/.config/hypr/scripts/get_apps.sh"]
+        command: ["bash", "-c", "bash $HOME/.config/hypr/scripts/get_apps.sh"]
         stdout: StdioCollector {
             onStreamFinished: {
                 allAppsModel.clear()
