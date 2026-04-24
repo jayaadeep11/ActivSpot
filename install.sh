@@ -47,7 +47,7 @@ PACMAN_PKGS=(
     xorg-xwayland qt5-wayland qt6-wayland
 
     # Terminal & browser & files
-    kitty  nautilus
+    kitty chromium nautilus
 
     # Shell utilities
     inotify-tools ffmpeg socat brightnessctl
@@ -56,11 +56,14 @@ PACMAN_PKGS=(
     matugen
 
     # Media & audio
+    playerctl cava pipewire pipewire-pulse pipewire-alsa pipewire-jack wireplumber
+    easyeffects swaync
 
     # Clipboard
     cliphist wl-clipboard
 
     # Screen recording
+    wl-screenrec
 
     # Fonts
     noto-fonts noto-fonts-emoji
