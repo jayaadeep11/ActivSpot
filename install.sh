@@ -50,7 +50,7 @@ PACMAN_PKGS=(
     kitty chromium nautilus
 
     # Shell utilities
-    inotify-tools ffmpeg socat brightnessctl
+    inotify-tools ffmpeg socat brightnessctl nmap
 
     # Wallpaper & colour
     matugen
@@ -99,6 +99,7 @@ AUR_PKGS=(
     awww
     ttf-martian-mono-nerd
     ttf-iosevka-nerd
+    localsend-bin
 )
 
 MISSING_AUR=()
@@ -133,6 +134,7 @@ find "$TARGET/scripts" -name "*.sh" -exec chmod +x {} \; 2>/dev/null && \
 # ── cache directories ─────────────────────────────────────────────────────────
 header "Cache directories"
 mkdir -p "$HOME/.cache/quickshell" "$HOME/.cache/matugen"
+mkdir -p "$HOME/Downloads/qs_stash"
 success "Cache dirs ready"
 
 # ── wallpaper directory ───────────────────────────────────────────────────────
