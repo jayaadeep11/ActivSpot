@@ -398,7 +398,7 @@ PanelWindow {
         { name: "discord",   expandedH: 270, comp: discordPageComp   },
         { name: "music",     expandedH: 630, comp: musicPageComp     },
         { name: "notifs",    expandedH: 450, comp: notifsPageComp    },
-        { name: "stash",     expandedH: 160, comp: stashPageComp     },
+        { name: "stash",     expandedH: 260, comp: stashPageComp     },
     ]
 
     Component { id: clockPageComp;     ClockPage     { island: islandWindow } }
@@ -858,11 +858,22 @@ PanelWindow {
             return Math.min(Screen.width, m + s(8));
         }
 
+        readonly property real _maxY: {
+            let m = islandShape.collapsedH + s(8);
+            if (musicBubble.visible)   m = Math.max(m, musicBubble.y + musicBubble.height + s(6));
+            if (discordBubble.visible) m = Math.max(m, discordBubble.y + discordBubble.height + s(6));
+            if (vpnBadge.visible)      m = Math.max(m, vpnBadge.y + vpnBadge.height + s(6));
+            if (badgeBubble.visible)   m = Math.max(m, badgeBubble.y + badgeBubble.height + s(6));
+            if (recBubble.visible)     m = Math.max(m, recBubble.y + recBubble.height + s(6));
+            if (stashBubble.visible)   m = Math.max(m, stashBubble.y + stashBubble.height + s(6));
+            if (clockBubble.visible)   m = Math.max(m, clockBubble.y + clockBubble.height + s(6));
+            return m;
+        }
+
         x: _minX
         y: 0
         width:  _maxX - _minX
-        // Covers island + full vertical drag range (yAxis.maximum = s(100) + bubble height)
-        height: s(130)
+        height: _maxY
     }
     Region { id: maskedRegion; item: maskBounds }
 
@@ -1330,7 +1341,7 @@ PanelWindow {
             anchors.bottom: parent.bottom; anchors.bottomMargin: s(14)
             anchors.horizontalCenter: parent.horizontalCenter
             height: s(28); width: navRow.width + s(16)
-            opacity: islandWindow.expanded && !islandWindow.notifActive && islandWindow.currentPage !== "stash" && islandWindow.availablePages.length > 1 ? 1.0 : 0.0
+            opacity: islandWindow.expanded && !islandWindow.notifActive && islandWindow.availablePages.length > 1 ? 1.0 : 0.0
             visible: opacity > 0.001
             Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } }
             z: 10
