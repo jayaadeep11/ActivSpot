@@ -10,7 +10,7 @@ My vision of a dynamic island for Hyprland. Originally developed for personal us
 ---
 If you'd like to support me, join my Patreon, [join my Patreon](https://patreon.com/dxvmxn)
 ---
-<img width="200" alt="image" src="https://github.com/user-attachments/assets/762e8414-c1d1-40a1-8da7-6ff9a7df95ad" />
+<img width="50" alt="image" src="https://github.com/user-attachments/assets/762e8414-c1d1-40a1-8da7-6ff9a7df95ad" />
 
 ---
 ## Features
